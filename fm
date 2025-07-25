@@ -7,7 +7,14 @@ import tty
 import struct
 import fcntl
 import configparser
+import shutil
 import subprocess
+try:
+	import send2trash
+except ImportError:
+	print("Cannot import send2trash. Try installing it (e.g. through the python3-send2trash package in your distribution).")
+	sys.exit(1)
+
 
 def readchar():
 	old_settings = termios.tcgetattr(sys.stdin.fileno())
@@ -66,6 +73,17 @@ class Tab:
 				self.cur = i
 				return
 
+	def remove(self, f):
+		idx = self.files.index(f)
+		del self.files[idx]
+		self.fix_cur()
+
+	def fix_cur(self):
+		if self.cur > len(self.files) - 1:
+			self.cur = len(self.files) - 1
+		if self.cur < 0:
+			self.cur = 0
+
 class FileManager:
 	def __init__(self):
 		self.current_tab = 0
@@ -100,6 +118,12 @@ class FileManager:
 				self.go_to_parent()
 			elif ch == 'g':
 				self.go_to_directory()
+				self.display_current_filename()
+			elif ch == 'd':
+				self.delete()
+				self.display_current_filename()
+			elif ch == 'D':
+				self.delete(trash=False)
 				self.display_current_filename()
 
 	def display_current_filename(self, full=False):
@@ -162,6 +186,37 @@ class FileManager:
 			print("Not a directory")
 			return
 		self.read_directory(d)
+
+	def delete(self, trash=True):
+		tab = self.tab
+		if not tab.files:
+			return
+		f = tab.files[tab.cur]
+		if trash:
+			self.write(f"Trash {f.name}? (y/n)")
+		else:
+			self.write(f"Permanently delete {f.name}? (y/n)")
+		answer = self.yes_no()
+		if not answer:
+			return
+		self.write('\n')
+		if trash:
+			send2trash.send2trash(f)
+		else:
+			try:
+				os.unlink(f)
+			except IsADirectoryError:
+				shutil.rmtree(f)
+		print("Ok")
+		tab.remove(f)
+
+	def yes_no(self):
+		while True:
+			answer = readchar()
+			if answer == 'y':
+				return True
+			elif answer == 'n':
+				return False
 
 	def read_config(self):
 		xdg_config_home = os.environ.get('XDG_CONFIG_HOME', os.path.expanduser('~/.config'))
