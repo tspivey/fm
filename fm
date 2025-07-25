@@ -108,6 +108,8 @@ class FileManager:
 			self.write('Empty directory')
 			return
 		filename = self.tab.files[self.tab.cur].name
+		if self.tab.files[self.tab.cur].is_symlink():
+			filename += "@"
 		if self.tab.files[self.tab.cur].is_dir():
 			filename += '/'
 		if len(filename) > self.cols and not full:
