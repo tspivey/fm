@@ -6,6 +6,7 @@ import termios
 import tty
 import struct
 import fcntl
+import configparser
 
 def readchar():
 	old_settings = termios.tcgetattr(sys.stdin.fileno())
@@ -37,19 +38,33 @@ class Tab:
 		self.files = entries
 		self.cur = 0
 
-	def sort(self, how, reverse=False):
-		if how == 'name':
-			self.files.sort(key=lambda x: x.name, reverse=reverse)
-		elif how == 'size':
-			self.files.sort(key=lambda x: x.stat(follow_symlinks=False).st_size, reverse=reverse)
+	def sort(self, how):
+		reverse = False
+		if how == 'name-asc':
+			def key(x): return x.name
+		elif how == 'name-desc':
+			def key(x): return x.name
+			reverse = True
+		elif how == 'size-asc':
+			def key(x): return x.stat(follow_symlinks=False).st_size
+		elif how == 'size-desc':
+			def key(x): return x.stat(follow_symlinks=False).st_size
+			reverse = True
+		elif how == 'time-asc':
+			def key(x): return x.stat(follow_symlinks=False).st_mtime_ns
+		elif how == 'time-desc':
+			def key(x): return x.stat(follow_symlinks=False).st_mtime_ns
+			reverse = True
 		else:
 			raise RuntimeError(f"Unknown sort method {how}")
+		self.files.sort(key=key, reverse=reverse)
 
 class FileManager:
 	def __init__(self):
 		self.current_tab = 0
 		self.tabs = [Tab()]
 		self.rows, self.cols = get_terminal_size(sys.stdin.fileno())
+		self.config = configparser.ConfigParser()
 
 	@property
 	def tab(self):
@@ -101,10 +116,26 @@ class FileManager:
 			self.tab.cur = len(self.tab.files) - 1
 		self.display_current_filename()
 
+	def read_config(self):
+		xdg_config_home = os.environ.get('XDG_CONFIG_HOME', os.path.expanduser('~/.config'))
+		config_file = os.path.join(xdg_config_home, 'fm', 'config')
+		if not os.path.exists(config_file):
+			return
+		self.config.read(config_file)
+		if 'general' not in self.config:
+			self.config.add_section('general')
+		if self.config['general'].get('sort') and self.config['general'].get('sort') not in 'name-asc name-desc size-asc size-desc time-asc time-desc'.split():
+			print(f"{config_file}: sort must be one of name-asc, name-desc, size-asc, size-desc, time-asc or time-desc.", file=sys.stderr)
+			sys.exit(1)
+
+	def read_directory(self, directory):
+		self.tab.read_directory(directory)
+		self.tab.sort(self.config['general'].get('sort', 'name-asc'))
+
 def main():
 	m = FileManager()
-	m.tab.read_directory('.')
-	m.tab.sort('size')
+	m.read_config()
+	m.read_directory('.')
 	m.run()
 
 if __name__ == '__main__':
