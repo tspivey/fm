@@ -7,6 +7,7 @@ import tty
 import struct
 import fcntl
 import configparser
+import subprocess
 
 def readchar():
 	old_settings = termios.tcgetattr(sys.stdin.fileno())
@@ -31,7 +32,7 @@ class Tab:
 		self.cur = 0
 
 	def read_directory(self, dir):
-		dir = Path(dir).absolute()
+		dir = self.dir = Path(dir).absolute()
 		entries = []
 		for e in dir.glob('*'):
 			entries.append(e)
@@ -87,6 +88,10 @@ class FileManager:
 				self.tab.cur = 0
 				print("\r\ntop")
 				self.display_current_filename()
+			elif ch == '\n':
+				self.open_file()
+			elif ch == '.':
+				self.go_to_parent()
 
 	def display_current_filename(self, full=False):
 		self.write('\x1b[2K\r')
@@ -114,6 +119,28 @@ class FileManager:
 		self.tab.cur += 1
 		if self.tab.cur > len(self.tab.files) - 1:
 			self.tab.cur = len(self.tab.files) - 1
+		self.display_current_filename()
+
+	def open_file(self):
+		if len(self.tab.files) == 0:
+			return
+		file = self.tab.files[self.tab.cur]
+		if file.is_dir():
+			self.read_directory(file)
+			self.display_current_filename()
+			return
+		else: # File, run it
+			subprocess.call(['run-mailcap', str(file)])
+			self.display_current_filename()
+
+	def go_to_parent(self):
+		assert self.tab.dir is not None
+		if str(self.tab.dir) == '/':
+			print("\nAlready at root")
+			self.display_current_filename()
+			return
+		parent = self.tab.dir.parent
+		self.read_directory(parent)
 		self.display_current_filename()
 
 	def read_config(self):
