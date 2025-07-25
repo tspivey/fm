@@ -1,0 +1,111 @@
+#!/usr/bin/env python3
+import sys
+import os
+from pathlib import Path
+import termios
+import tty
+import struct
+import fcntl
+
+def readchar():
+	old_settings = termios.tcgetattr(sys.stdin.fileno())
+	new_settings = list(old_settings)
+	tty.cfmakecbreak(new_settings)
+	try:
+		termios.tcsetattr(sys.stdin.fileno(), termios.TCSAFLUSH, new_settings)
+		ch = os.read(sys.stdin.fileno(), 10).decode('utf-8')
+		return ch
+	finally:
+		termios.tcsetattr(sys.stdin.fileno(), termios.TCSANOW, old_settings)
+
+def get_terminal_size(fd):
+	s = struct.pack('HHHH', 0, 0, 0, 0)
+	rows, cols, _, _ = struct.unpack('HHHH', fcntl.ioctl(fd, termios.TIOCGWINSZ, s))
+	return rows, cols
+
+class Tab:
+	def __init__(self):
+		self.files: list[Path] = []
+		self.dir = None
+		self.cur = 0
+
+	def read_directory(self, dir):
+		dir = Path(dir).absolute()
+		entries = []
+		for e in dir.glob('*'):
+			entries.append(e)
+		self.files = entries
+		self.cur = 0
+
+	def sort(self, how, reverse=False):
+		if how == 'name':
+			self.files.sort(key=lambda x: x.name, reverse=reverse)
+		elif how == 'size':
+			self.files.sort(key=lambda x: x.stat(follow_symlinks=False).st_size, reverse=reverse)
+		else:
+			raise RuntimeError(f"Unknown sort method {how}")
+
+class FileManager:
+	def __init__(self):
+		self.current_tab = 0
+		self.tabs = [Tab()]
+		self.rows, self.cols = get_terminal_size(sys.stdin.fileno())
+
+	@property
+	def tab(self):
+		return self.tabs[self.current_tab]
+
+	def run(self):
+		self.display_current_filename()
+		while True:
+			ch = readchar()
+			if ch == 'q':
+				self.write('\r\n')
+				sys.exit(0)
+			elif ch == ' ':
+				self.display_current_filename(True)
+			elif ch == '\x1b[A':
+				self.move_up()
+			elif ch == '\x1b[B':
+				self.move_down()
+			elif ch == 'b':
+				self.tab.cur = 0
+				print("\r\ntop")
+				self.display_current_filename()
+
+	def display_current_filename(self, full=False):
+		self.write('\x1b[2K\r')
+		if len(self.tab.files) == 0:
+			self.write('Empty directory')
+			return
+		filename = self.tab.files[self.tab.cur].name
+		if self.tab.files[self.tab.cur].is_dir():
+			filename += '/'
+		if len(filename) > self.cols and not full:
+			filename = filename[:self.cols - 1] + "$"
+		self.write(filename+'\r')
+
+	def write(self, s):
+		sys.stdout.write(s)
+		sys.stdout.flush()
+
+	def move_up(self):
+		self.tab.cur -= 1
+		if self.tab.cur < 0:
+			self.tab.cur = 0
+		self.display_current_filename()
+
+	def move_down(self):
+		self.tab.cur += 1
+		if self.tab.cur > len(self.tab.files) - 1:
+			self.tab.cur = len(self.tab.files) - 1
+		self.display_current_filename()
+
+def main():
+	m = FileManager()
+	m.tab.read_directory('.')
+	m.tab.sort('size')
+	m.run()
+
+if __name__ == '__main__':
+	main()
