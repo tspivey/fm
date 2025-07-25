@@ -60,6 +60,12 @@ class Tab:
 			raise RuntimeError(f"Unknown sort method {how}")
 		self.files.sort(key=key, reverse=reverse)
 
+	def focus(self, name):
+		for i, f in enumerate(self.files):
+			if f.name == name:
+				self.cur = i
+				return
+
 class FileManager:
 	def __init__(self):
 		self.current_tab = 0
@@ -140,7 +146,9 @@ class FileManager:
 			self.display_current_filename()
 			return
 		parent = self.tab.dir.parent
+		name = self.tab.dir.name
 		self.read_directory(parent)
+		self.tab.focus(name)
 		self.display_current_filename()
 
 	def read_config(self):
