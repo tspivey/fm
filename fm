@@ -12,7 +12,7 @@ import subprocess
 def readchar():
 	old_settings = termios.tcgetattr(sys.stdin.fileno())
 	new_settings = list(old_settings)
-	tty.cfmakecbreak(new_settings)
+	tty.cfmakeraw(new_settings)
 	try:
 		termios.tcsetattr(sys.stdin.fileno(), termios.TCSAFLUSH, new_settings)
 		ch = os.read(sys.stdin.fileno(), 10).decode('utf-8')
@@ -94,7 +94,7 @@ class FileManager:
 				self.tab.cur = 0
 				print("\r\ntop")
 				self.display_current_filename()
-			elif ch == '\n':
+			elif ch == '\r':
 				self.open_file()
 			elif ch == '.':
 				self.go_to_parent()
