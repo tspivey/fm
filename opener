@@ -1,0 +1,11 @@
+#!/bin/bash
+# Usage: opener filename
+
+case "$1" in
+*.ogg | *.mp3 | *.opus | *.mkv | *.wav | *.avi | *.flac | *.wma | *.mp4 | *.m3u)
+	mpv -quiet -vo=null "$1"
+	;;
+*)
+	less "$1"
+	;;
+esac

@@ -168,7 +168,12 @@ class FileManager:
 			self.display_current_filename()
 			return
 		else: # File, run it
-			subprocess.call(['run-mailcap', str(file)])
+			if 'opener' not in self.config['general']:
+				print("No opener defined in configuration")
+				self.display_current_filename()
+				return
+			opener = os.path.expanduser(self.config["general"]['opener'])
+			subprocess.call([opener, str(file)])
 			self.display_current_filename()
 
 	def go_to_parent(self):
