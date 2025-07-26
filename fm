@@ -48,9 +48,9 @@ class Tab:
 	def sort(self, how):
 		reverse = False
 		if how == 'name-asc':
-			def key(x): return x.name
+			def key(x): return x.name.lower()
 		elif how == 'name-desc':
-			def key(x): return x.name
+			def key(x): return x.name.lower()
 			reverse = True
 		elif how == 'size-asc':
 			def key(x): return x.stat(follow_symlinks=False).st_size
