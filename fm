@@ -6,7 +6,9 @@ import termios
 import tty
 import struct
 import fcntl
+import fnmatch
 import configparser
+import re
 import shutil
 import subprocess
 try:
@@ -84,12 +86,27 @@ class Tab:
 		if self.cur < 0:
 			self.cur = 0
 
+	def search(self, query, reverse=False):
+		t = fnmatch.translate(query)
+		t = "(?i)" + t
+		if reverse:
+			r = range(self.cur - 1, 0, -1)
+		else:
+			r = range(self.cur + 1, len(self.files))
+		found = False
+		for i in r:
+			if re.match(t, self.files[i].name):
+				self.cur = i
+				return True
+		return False
+
 class FileManager:
 	def __init__(self):
 		self.current_tab = 0
 		self.tabs = [Tab()]
 		self.rows, self.cols = get_terminal_size(sys.stdin.fileno())
 		self.config = configparser.ConfigParser()
+		self.search_query = ''
 
 	@property
 	def tab(self):
@@ -128,6 +145,14 @@ class FileManager:
 				self.display_current_filename()
 			elif ch == 's':
 				self.display_size()
+			elif ch == '/':
+				self.do_search()
+			elif ch == 'n':
+				self.write('\n')
+				self.search_next()
+			elif ch == 'N':
+				self.write('\n')
+				self.search_previous()
 
 	def display_current_filename(self, full=False):
 		self.write('\x1b[2K\r')
@@ -232,6 +257,23 @@ class FileManager:
 		self.write(f"\x1b[1;{self.rows-1}r\x1b[{self.rows-1};1H\n")
 		subprocess.call(['du', '-hs', self.tab.files[self.tab.cur]])
 		self.write(f"\x1b[H\x1bM\x1b[r\x1b[{self.rows};1H")
+
+	def do_search(self):
+		self.write('\n')
+		self.search_query = input("Search: ")
+		self.search_next()
+
+	def search_next(self):
+		found = self.tab.search(self.search_query)
+		if not found:
+			self.write("Not found\n")
+		self.display_current_filename()
+
+	def search_previous(self):
+		found = self.tab.search(self.search_query, reverse=True)
+		if not found:
+			print("Not found")
+		self.display_current_filename()
 
 	def read_config(self):
 		xdg_config_home = os.environ.get('XDG_CONFIG_HOME', os.path.expanduser('~/.config'))
