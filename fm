@@ -131,11 +131,18 @@ class FileManager:
 				print("\r\ntop")
 				self.display_current_filename()
 			elif ch == '\r':
-				self.open_file()
+				try:
+					self.open_file()
+				except OSError as e:
+					self.write(f"\nError reading directory: {e.strerror}\n")
+					self.display_current_filename()
 			elif ch == '.':
 				self.go_to_parent()
 			elif ch == 'g':
-				self.go_to_directory()
+				try:
+					self.go_to_directory()
+				except OSError as e:
+					self.write(f"\nError reading directory: {e.strerror}\n")
 				self.display_current_filename()
 			elif ch == 'd':
 				self.delete()
@@ -434,8 +441,6 @@ class FileManager:
 			sys.exit(1)
 
 	def read_directory(self, directory):
-		if not os.access(directory, os.R_OK):
-			print("Warning: directory unreadable, the listing will be empty")
 		self.tab.read_directory(directory)
 		self.tab.sort(self.config['general'].get('sort', 'name-asc'))
 
@@ -443,7 +448,12 @@ def main():
 	m = FileManager()
 	m.read_config()
 	for d in sys.argv[1:]:
-		m.new_tab(d)
+		try:
+			m.new_tab(d)
+		except OSError as e:
+			print(f"Error loading directory {d}: {e.strerror}")
+	if len(m.tabs) == 0 and len(sys.argv) > 1:
+		print("Specified directories couldn't be loaded; loading current directory.")
 	if len(m.tabs) == 0:
 		m.new_tab('.')
 	m.run()
