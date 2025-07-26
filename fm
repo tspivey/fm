@@ -96,6 +96,7 @@ class FileManager:
 		return self.tabs[self.current_tab]
 
 	def run(self):
+		self.write(f"\x1b[{self.rows};1H\x1b[2k")
 		self.display_current_filename()
 		while True:
 			ch = readchar()
@@ -125,6 +126,8 @@ class FileManager:
 			elif ch == 'D':
 				self.delete(trash=False)
 				self.display_current_filename()
+			elif ch == 's':
+				self.display_size()
 
 	def display_current_filename(self, full=False):
 		self.write('\x1b[2K\r')
@@ -218,6 +221,13 @@ class FileManager:
 			elif answer == 'n':
 				return False
 
+	def display_size(self):
+		if len(self.tab.files) == 0:
+			return
+		self.write(f"\x1b[1;{self.rows-1}r\x1b[{self.rows-1};1H\n")
+		subprocess.call(['du', '-hs', self.tab.files[self.tab.cur]])
+		self.write(f"\x1b[H\x1bM\x1b[r\x1b[{self.rows};1H")
+
 	def read_config(self):
 		xdg_config_home = os.environ.get('XDG_CONFIG_HOME', os.path.expanduser('~/.config'))
 		config_file = os.path.join(xdg_config_home, 'fm', 'config')
@@ -243,4 +253,8 @@ def main():
 	m.run()
 
 if __name__ == '__main__':
-	main()
+	try:
+		main()
+	finally:
+		rows, cols = get_terminal_size(sys.stdin.fileno())
+		sys.stdout.write(f"\x1b[r\x1b[{rows};1H")
