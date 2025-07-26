@@ -4,8 +4,6 @@ import os
 from pathlib import Path
 import termios
 import tty
-import struct
-import fcntl
 import fnmatch
 import configparser
 import re
