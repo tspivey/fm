@@ -338,7 +338,7 @@ class FileManager:
 			self.tab.files[self.tab.cur] = self.tab.files[self.tab.cur].with_name(new_path.name)
 
 	def do_new_tab(self, directory):
-		if len(self.tabs) > 10:
+		if len(self.tabs) == 10:
 			self.write("\nToo many tabs\n")
 			self.display_current_filename()
 			return
