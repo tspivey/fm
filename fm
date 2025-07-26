@@ -94,7 +94,6 @@ class Tab:
 			r = range(self.cur - 1, 0, -1)
 		else:
 			r = range(self.cur + 1, len(self.files))
-		found = False
 		for i in r:
 			if re.match(t, self.files[i].name):
 				self.cur = i
