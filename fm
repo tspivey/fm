@@ -30,11 +30,6 @@ def readchar():
 	finally:
 		termios.tcsetattr(sys.stdin.fileno(), termios.TCSANOW, old_settings)
 
-def get_terminal_size(fd):
-	s = struct.pack('HHHH', 0, 0, 0, 0)
-	rows, cols, _, _ = struct.unpack('HHHH', fcntl.ioctl(fd, termios.TIOCGWINSZ, s))
-	return rows, cols
-
 class Tab:
 	def __init__(self):
 		self.files: list[Path] = []
@@ -110,7 +105,7 @@ class FileManager:
 	def __init__(self):
 		self.current_tab = 0
 		self.tabs = []
-		self.rows, self.cols = get_terminal_size(sys.stdin.fileno())
+		self.cols, self.rows = os.get_terminal_size()
 		self.config = configparser.ConfigParser()
 		self.search_query = ''
 
@@ -486,5 +481,5 @@ if __name__ == '__main__':
 	try:
 		main()
 	finally:
-		rows, cols = get_terminal_size(sys.stdin.fileno())
+		cols, rows = os.get_terminal_size()
 		sys.stdout.write(f"\x1b[r\x1b[{rows};1H")
