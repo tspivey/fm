@@ -282,7 +282,7 @@ class FileManager:
 		if len(self.tab.files) == 0:
 			return
 		self.write(f"\x1b[1;{self.rows-1}r\x1b[{self.rows-1};1H\n")
-		subprocess.call(['du', '-hs', self.tab.files[self.tab.cur]])
+		subprocess.call(['du', '-hs', '--apparent-size', self.tab.files[self.tab.cur]])
 		self.write(f"\x1b[H\x1bM\x1b[r\x1b[{self.rows};1H")
 
 	def do_search(self):
