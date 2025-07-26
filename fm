@@ -44,8 +44,8 @@ class Tab:
 	def read_directory(self, dir):
 		dir = self.dir = Path(dir).absolute()
 		entries = []
-		for e in dir.glob('*'):
-			entries.append(e)
+		for e in os.scandir(dir):
+			entries.append(dir / e.name)
 		self.files = entries
 		self.cur = 0
 
