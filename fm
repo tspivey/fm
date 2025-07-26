@@ -281,6 +281,7 @@ class FileManager:
 	def shell(self):
 		self.write('\n')
 		subprocess.call([os.environ["SHELL"]], cwd=self.tab.dir)
+		self.write(f"\x1b[{self.rows};1H\x1b[2k")
 
 	def read_config(self):
 		xdg_config_home = os.environ.get('XDG_CONFIG_HOME', os.path.expanduser('~/.config'))
