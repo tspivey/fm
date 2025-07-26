@@ -174,6 +174,12 @@ class FileManager:
 				if len(self.tabs) - 1 < idx:
 					continue
 				self.switch_to_tab(idx)
+			elif ch == 'm':
+				self.move()
+				self.display_current_filename()
+			elif ch == 'c':
+				self.copy()
+				self.display_current_filename()
 
 	def display_current_filename(self, full=False):
 		self.write('\x1b[2K\r')
@@ -347,6 +353,69 @@ class FileManager:
 			self.current_tab -= 1
 		self.write(f"\nTab {self.current_tab+1} {self.tab.dir}\n")
 		self.display_current_filename()
+
+	def move(self):
+		if not self.tab.files:
+			return
+		self.write('\n')
+		dest = self.get_move_dest(f"Move {self.tab.files[self.tab.cur]} to (tab#/directory): ")
+		if not dest:
+			return
+		if not dest.exists():
+			self.write(f"Error: {dest} doesn't exist. Create? (y/n)")
+			if self.yes_no():
+				dest.mkdir(parents=True)
+			else:
+				return
+		source_file = self.tab.files[self.tab.cur]
+		dest_file = dest / source_file.name
+		if dest_file.exists():
+			self.write(f"Error: destination file {dest_file} exists\n")
+			return
+		code = subprocess.call(['mv', source_file, dest_file])
+		if code != 0:
+			return # Something went wrong
+		self.tab.remove(source_file)
+
+	def copy(self):
+		if not self.tab.files:
+			return
+		self.write('\n')
+		dest = self.get_move_dest(f"Copy {self.tab.files[self.tab.cur]} to (tab#/directory): ")
+		if not dest:
+			return
+		if not dest.exists():
+			self.write(f"Error: {dest} doesn't exist. Create? (y/n)")
+			if self.yes_no():
+				dest.mkdir(parents=True)
+			else:
+				return
+		source_file = self.tab.files[self.tab.cur]
+		dest_file = dest / source_file.name
+		if dest_file.exists():
+			self.write(f"Error: destination file {dest_file} exists\n")
+			return
+		code = subprocess.call(['cp', '-a', source_file, dest_file])
+		if code != 0:
+			return # Something went wrong
+
+	def get_move_dest(self, prompt):
+		dest = input(prompt)
+		if not dest:
+			return
+		if dest.isdigit():
+			tab_idx = int(dest)
+			if tab_idx == 0:
+				tab_idx = 9
+			else:
+				tab_idx -= 1
+			if len(self.tabs) < tab_idx:
+				self.write("Tab not open\n")
+				return
+			return self.tabs[tab_idx].dir
+		else: # not digits
+			assert self.tab.dir is not None
+			return self.tab.dir / Path(dest)
 
 	def read_config(self):
 		xdg_config_home = os.environ.get('XDG_CONFIG_HOME', os.path.expanduser('~/.config'))
