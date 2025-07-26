@@ -53,6 +53,7 @@ Use `trash-list` to list it, `trash-restore` to restore something from it and `t
 * 1 through 0 - switch tabs.
 * m - move file.
 * c - copy file.
+* e - edit file
 
 ## Known bugs
 * The s command calls du to print the size of the currently selected item. Because du outputs a final newline which causes an unwanted blank line before the cursor,
