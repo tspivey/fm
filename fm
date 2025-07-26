@@ -48,6 +48,7 @@ class Tab:
 			entries.append(dir / e.name)
 		self.files = entries
 		self.cur = 0
+		self.current_sort = 'name-asc'
 
 	def sort(self, how):
 		reverse = False
@@ -69,6 +70,7 @@ class Tab:
 		else:
 			raise RuntimeError(f"Unknown sort method {how}")
 		self.files.sort(key=key, reverse=reverse)
+		self.current_sort = how
 
 	def focus(self, name):
 		for i, f in enumerate(self.files):
@@ -99,6 +101,10 @@ class Tab:
 				self.cur = i
 				return True
 		return False
+
+	def refresh(self):
+		self.read_directory(self.dir)
+		self.sort(self.current_sort)
 
 class FileManager:
 	def __init__(self):
@@ -390,6 +396,9 @@ class FileManager:
 		if code != 0:
 			return # Something went wrong
 		self.tab.remove(source_file)
+		for tab in self.tabs:
+			if tab.dir == dest:
+				self.refresh(tab)
 
 	def copy(self):
 		if not self.tab.files:
@@ -412,6 +421,9 @@ class FileManager:
 		code = subprocess.call(['cp', '-a', source_file, dest_file])
 		if code != 0:
 			return # Something went wrong
+		for tab in self.tabs:
+			if tab.dir == dest:
+				self.refresh(tab)
 
 	def get_move_dest(self, prompt):
 		dest = input(prompt)
@@ -430,6 +442,15 @@ class FileManager:
 		else: # not digits
 			assert self.tab.dir is not None
 			return self.tab.dir / Path(dest)
+
+	def refresh(self, tab):
+		if tab.files:
+			f = tab.files[tab.cur]
+		else:
+			f = None
+		tab.refresh()
+		if f:
+			tab.focus(f.name)
 
 	def read_config(self):
 		xdg_config_home = os.environ.get('XDG_CONFIG_HOME', os.path.expanduser('~/.config'))
