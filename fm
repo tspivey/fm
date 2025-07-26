@@ -323,7 +323,10 @@ class FileManager:
 			readline.set_startup_hook()
 			readline.insert_text(self.tab.files[self.tab.cur].name)
 		readline.set_startup_hook(f)
-		new_name = input("Rename: ")
+		try:
+			new_name = input("Rename: ")
+		except KeyboardInterrupt:
+			return
 		assert self.tab.dir is not None
 		new_path = self.tab.dir / new_name
 		if new_path.exists():
