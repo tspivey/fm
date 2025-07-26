@@ -103,7 +103,7 @@ class Tab:
 class FileManager:
 	def __init__(self):
 		self.current_tab = 0
-		self.tabs = [Tab()]
+		self.tabs = []
 		self.rows, self.cols = get_terminal_size(sys.stdin.fileno())
 		self.config = configparser.ConfigParser()
 		self.search_query = ''
@@ -163,7 +163,7 @@ class FileManager:
 					self.write(f"Error: {e}\n")
 				self.display_current_filename()
 			elif ch == '\x14': # ^T
-				self.new_tab()
+				self.do_new_tab(os.environ['HOME'])
 			elif ch == '\x17': # ^W
 				self.close_tab()
 			elif ch in '0123456789':
@@ -330,16 +330,19 @@ class FileManager:
 		else:
 			self.tab.files[self.tab.cur] = self.tab.files[self.tab.cur].with_name(new_path.name)
 
-	def new_tab(self):
+	def do_new_tab(self, directory):
 		if len(self.tabs) > 10:
 			self.write("\nToo many tabs\n")
 			self.display_current_filename()
 			return
+		self.new_tab(directory)
+		self.switch_to_tab(len(self.tabs) - 1)
+
+	def new_tab(self, directory):
 		tab = Tab()
-		tab.read_directory(os.environ['HOME'])
+		tab.read_directory(directory)
 		tab.sort(self.config['general'].get('sort', 'name-asc'))
 		self.tabs.append(tab)
-		self.switch_to_tab(len(self.tabs) - 1)
 
 	def switch_to_tab(self, idx):
 		self.current_tab = idx
@@ -439,7 +442,10 @@ class FileManager:
 def main():
 	m = FileManager()
 	m.read_config()
-	m.read_directory('.')
+	for d in sys.argv[1:]:
+		m.new_tab(d)
+	if len(m.tabs) == 0:
+		m.new_tab('.')
 	m.run()
 
 if __name__ == '__main__':
