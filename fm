@@ -186,6 +186,10 @@ class FileManager:
 			elif ch == 'c':
 				self.copy()
 				self.display_current_filename()
+			elif ch == 'e':
+				self.edit()
+				self.write(f"\x1b[{self.rows};1H\x1b[2k")
+				self.display_current_filename()
 
 	def display_current_filename(self, full=False):
 		self.write('\x1b[2K\r')
@@ -444,6 +448,19 @@ class FileManager:
 		tab.refresh()
 		if f:
 			tab.focus(f.name)
+
+	def edit(self):
+		if not self.tab.files:
+			return
+		editor = self.get_editor()
+		subprocess.call([editor, self.tab.files[self.tab.cur]])
+
+	def get_editor(self):
+		if editor := self.config['general'].get('editor'):
+			return editor
+		if editor := os.environ.get('VISUAL'):
+			return editor
+		return os.environ.get('EDITOR', 'vi')
 
 	def read_config(self):
 		self.config.add_section("general")
