@@ -13,6 +13,7 @@ Press space to have the entire name displayed. After you do this, your cursor wi
 
 ## Configuration file
 The configuration file is located at `~/.config/fm/config`.
+An example is included in `example.cfg`.
 
 ## Searching
 IF you have a long list of files, you might want to search for something specific.
