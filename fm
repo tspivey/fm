@@ -163,6 +163,18 @@ class FileManager:
 				except OSError as e:
 					self.write(f"Error: {e}\n")
 				self.display_current_filename()
+			elif ch == '\x14': # ^T
+				self.new_tab()
+			elif ch == '\x17': # ^W
+				self.close_tab()
+			elif ch in '0123456789':
+				if ch == '0':
+					idx = 9
+				else:
+					idx = ord(ch) - 49
+				if len(self.tabs) - 1 < idx:
+					continue
+				self.switch_to_tab(idx)
 
 	def display_current_filename(self, full=False):
 		self.write('\x1b[2K\r')
@@ -311,6 +323,31 @@ class FileManager:
 			self.tab.fix_cur()
 		else:
 			self.tab.files[self.tab.cur] = self.tab.files[self.tab.cur].with_name(new_path.name)
+
+	def new_tab(self):
+		if len(self.tabs) > 10:
+			self.write("\nToo many tabs\n")
+			self.display_current_filename()
+			return
+		tab = Tab()
+		tab.read_directory(os.environ['HOME'])
+		tab.sort(self.config['general'].get('sort', 'name-asc'))
+		self.tabs.append(tab)
+		self.switch_to_tab(len(self.tabs) - 1)
+
+	def switch_to_tab(self, idx):
+		self.current_tab = idx
+		self.write(f"\nTab {idx+1} {self.tab.dir}\n")
+		self.display_current_filename()
+
+	def close_tab(self):
+		if len(self.tabs) == 1:
+			return
+		del self.tabs[self.current_tab]
+		if self.current_tab > 0:
+			self.current_tab -= 1
+		self.write(f"\nTab {self.current_tab+1} {self.tab.dir}\n")
+		self.display_current_filename()
 
 	def read_config(self):
 		xdg_config_home = os.environ.get('XDG_CONFIG_HOME', os.path.expanduser('~/.config'))
