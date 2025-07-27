@@ -87,7 +87,7 @@ class Tab:
 		t = fnmatch.translate(query)
 		t = "(?i)" + t
 		if reverse:
-			r = range(self.cur - 1, 0, -1)
+			r = range(self.cur - 1, -1, -1)
 		else:
 			r = range(self.cur + 1, len(self.files))
 		for i in r:
