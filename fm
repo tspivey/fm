@@ -343,6 +343,9 @@ class FileManager:
 			self.tab.fix_cur()
 		else:
 			self.tab.files[self.tab.cur] = self.tab.files[self.tab.cur].with_name(new_path.name)
+			# Re-sort the list
+			self.tab.sort(self.tab.current_sort)
+			self.tab.focus(new_path.name)
 
 	def do_new_tab(self, directory):
 		if len(self.tabs) == 10:
