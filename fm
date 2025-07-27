@@ -255,6 +255,8 @@ class FileManager:
 	def go_to_directory(self):
 		d = input("Go to directory: ")
 		d = Path(os.path.expanduser(d))
+		if not d.is_absolute():
+			d = self.tab.dir / d
 		if not os.path.isdir(d):
 			print("Not a directory")
 			return
