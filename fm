@@ -161,6 +161,7 @@ class FileManager:
 				self.search_previous()
 			elif ch == '!':
 				self.shell()
+				self.refresh(self.tab)
 				self.display_current_filename()
 			elif ch == 'r':
 				try:
