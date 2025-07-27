@@ -54,6 +54,7 @@ Use `trash-list` to list it, `trash-restore` to restore something from it and `t
 * m - move file.
 * c - copy file.
 * e - edit file
+* t - show modification time of file.
 
 ## Known bugs
 * The s command calls du to print the size of the currently selected item. Because du outputs a final newline which causes an unwanted blank line before the cursor,

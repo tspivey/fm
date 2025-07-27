@@ -2,6 +2,7 @@
 import sys
 import os
 from pathlib import Path
+import datetime
 import termios
 import tty
 import fnmatch
@@ -192,6 +193,8 @@ class FileManager:
 				self.edit()
 				self.write(f"\x1b[{self.rows};1H\x1b[2k")
 				self.display_current_filename()
+			elif ch == 't':
+				self.time()
 
 	def display_current_filename(self, full=False):
 		self.write('\x1b[2K\r')
@@ -471,6 +474,18 @@ class FileManager:
 		if editor := os.environ.get('VISUAL'):
 			return editor
 		return os.environ.get('EDITOR', 'vi')
+
+	def time(self):
+		if not self.tab.files:
+			return
+		ts = self.tab.files[self.tab.cur].stat().st_mtime
+		t = datetime.datetime.fromtimestamp(ts)
+		s = t.strftime("%b %d %Y %H:%M")
+		i = s.find(' ')+1
+		if s[i] == '0':
+			s = s[:i] + s[i+1:]
+		self.write(f"\x1b[1;{self.rows-1}r\x1bM\x1b[r\x1b[{self.rows-1};1H")
+		self.write(s+'\n')
 
 	def read_config(self):
 		self.config.add_section("general")
