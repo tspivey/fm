@@ -8,6 +8,7 @@ import fnmatch
 import configparser
 import re
 import readline
+import shlex
 import shutil
 import subprocess
 try:
@@ -457,7 +458,10 @@ class FileManager:
 		if not self.tab.files:
 			return
 		editor = self.get_editor()
-		subprocess.call([editor, self.tab.files[self.tab.cur]])
+		try:
+			subprocess.call([*shlex.split(editor), self.tab.files[self.tab.cur]])
+		except OSError as e:
+			self.write(f"\nFailed to launch editor: {e.strerror}\n")
 
 	def get_editor(self):
 		if editor := self.config['general'].get('editor'):
