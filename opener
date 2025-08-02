@@ -2,8 +2,9 @@
 # Usage: opener filename
 
 case "$1" in
-*.ogg | *.mp3 | *.opus | *.mkv | *.wav | *.avi | *.flac | *.wma | *.mp4 | *.m3u)
-	mpv -quiet -vo=null "$1"
+*.ogg | *.mp3 | *.opus | *.mkv | *.wav | *.avi | *.flac | *.wma | *.mp4 | \
+*.m3u | *.m4a | *.m4b | *.vob)
+	mpv --quiet --no-video "$1"
 	;;
 *)
 	less "$1"
