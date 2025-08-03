@@ -1,5 +1,7 @@
 #!/bin/bash
 # Usage: opener filename
+set -e
+shopt -s nocasematch
 
 case "$1" in
 *.ogg | *.mp3 | *.opus | *.mkv | *.wav | *.avi | *.flac | *.wma | *.mp4 | \
