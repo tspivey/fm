@@ -256,6 +256,7 @@ class FileManager:
 		self.display_current_filename()
 
 	def go_to_directory(self):
+		self.write('\n')
 		d = input("Go to directory: ")
 		d = Path(os.path.expanduser(d))
 		if not d.is_absolute():
