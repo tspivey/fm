@@ -117,84 +117,91 @@ class FileManager:
 		self.write(f"\x1b[{self.rows};1H\x1b[2k")
 		self.display_current_filename()
 		while True:
-			ch = readchar()
-			if ch == 'q':
-				self.write('\r\n')
-				sys.exit(0)
-			elif ch == ' ':
-				self.display_current_filename(True)
-			elif ch == '\x1b[A':
-				self.move_up()
-			elif ch == '\x1b[B':
-				self.move_down()
-			elif ch == 'b':
-				self.tab.cur = 0
-				print("\r\ntop")
-				self.display_current_filename()
-			elif ch == '\r':
-				try:
-					self.open_file()
-				except OSError as e:
-					self.write(f"\nError reading directory: {e.strerror}\n")
-					self.display_current_filename()
-			elif ch == '.':
-				self.go_to_parent()
-			elif ch == 'g':
-				try:
-					self.go_to_directory()
-				except OSError as e:
-					self.write(f"\nError reading directory: {e.strerror}\n")
-				self.display_current_filename()
-			elif ch == 'd':
-				self.delete()
-				self.display_current_filename()
-			elif ch == 'D':
-				self.delete(trash=False)
-				self.display_current_filename()
-			elif ch == 's':
-				self.display_size()
-			elif ch == '/':
-				self.do_search()
-			elif ch == 'n':
+			try:
+				self.run_command()
+			except KeyboardInterrupt:
 				self.write('\n')
-				self.search_next()
-			elif ch == 'N':
-				self.write('\n')
-				self.search_previous()
-			elif ch == '!':
-				self.shell()
-				self.refresh(self.tab)
 				self.display_current_filename()
-			elif ch == 'r':
-				try:
-					self.rename()
-				except OSError as e:
-					self.write(f"Error: {e}\n")
+
+	def run_command(self):
+		ch = readchar()
+		if ch == 'q':
+			self.write('\r\n')
+			sys.exit(0)
+		elif ch == ' ':
+			self.display_current_filename(True)
+		elif ch == '\x1b[A':
+			self.move_up()
+		elif ch == '\x1b[B':
+			self.move_down()
+		elif ch == 'b':
+			self.tab.cur = 0
+			print("\r\ntop")
+			self.display_current_filename()
+		elif ch == '\r':
+			try:
+				self.open_file()
+			except OSError as e:
+				self.write(f"\nError reading directory: {e.strerror}\n")
 				self.display_current_filename()
-			elif ch == '\x14': # ^T
-				self.do_new_tab(os.environ['HOME'])
-			elif ch == '\x17': # ^W
-				self.close_tab()
-			elif ch in '0123456789':
-				if ch == '0':
-					idx = 9
-				else:
-					idx = ord(ch) - 49
-				if len(self.tabs) - 1 < idx:
-					continue
-				self.switch_to_tab(idx)
-			elif ch == 'm':
-				self.move()
-				self.display_current_filename()
-			elif ch == 'c':
-				self.copy()
-				self.display_current_filename()
-			elif ch == 'e':
-				self.edit()
-				self.write(f"\x1b[{self.rows};1H\x1b[2k")
-				self.display_current_filename()
-			elif ch == 't':
-				self.time()
+		elif ch == '.':
+			self.go_to_parent()
+		elif ch == 'g':
+			try:
+				self.go_to_directory()
+			except OSError as e:
+				self.write(f"\nError reading directory: {e.strerror}\n")
+			self.display_current_filename()
+		elif ch == 'd':
+			self.delete()
+			self.display_current_filename()
+		elif ch == 'D':
+			self.delete(trash=False)
+			self.display_current_filename()
+		elif ch == 's':
+			self.display_size()
+		elif ch == '/':
+			self.do_search()
+		elif ch == 'n':
+			self.write('\n')
+			self.search_next()
+		elif ch == 'N':
+			self.write('\n')
+			self.search_previous()
+		elif ch == '!':
+			self.shell()
+			self.refresh(self.tab)
+			self.display_current_filename()
+		elif ch == 'r':
+			try:
+				self.rename()
+			except OSError as e:
+				self.write(f"Error: {e}\n")
+			self.display_current_filename()
+		elif ch == '\x14': # ^T
+			self.do_new_tab(os.environ['HOME'])
+		elif ch == '\x17': # ^W
+			self.close_tab()
+		elif ch in '0123456789':
+			if ch == '0':
+				idx = 9
+			else:
+				idx = ord(ch) - 49
+			if len(self.tabs) - 1 < idx:
+				return
+			self.switch_to_tab(idx)
+		elif ch == 'm':
+			self.move()
+			self.display_current_filename()
+		elif ch == 'c':
+			self.copy()
+			self.display_current_filename()
+		elif ch == 'e':
+			self.edit()
+			self.write(f"\x1b[{self.rows};1H\x1b[2k")
+			self.display_current_filename()
+		elif ch == 't':
+			self.time()
 
 	def display_current_filename(self, full=False):
 		self.write('\x1b[2K\r')
